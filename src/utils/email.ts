@@ -161,6 +161,23 @@ function formatINR(amount: number): string {
   }).format(amount);
 }
 
+function buildOrderSubject(items: OrderReceiptItem[]): string {
+  if (items.length === 0) return "Your order has been successfully placed";
+
+  const firstName = items[0].name;
+  const rest = items.length - 1;
+
+  if (rest === 0) {
+    return `Your Order for ${firstName} has been successfully placed`;
+  }
+
+  // Truncate the first product name so the subject doesn't get unwieldy
+  const truncated = firstName.length > 30 ? firstName.slice(0, 30).trimEnd() : firstName;
+  const noun = rest === 1 ? "product" : "products";
+
+  return `Your Order for ${truncated} ...+${rest} more ${noun} has been successfully placed`;
+}
+
 export async function sendOrderReceiptEmail(payload: OrderReceiptPayload) {
   const {
     to,
@@ -265,10 +282,12 @@ export async function sendOrderReceiptEmail(payload: OrderReceiptPayload) {
     </div>
   `;
 
+  const subject = buildOrderSubject(items);
+
   if (!transporter) {
     console.log("\n=================== ORDER RECEIPT (DEV MODE) ===================");
     console.log(`To:      ${to}`);
-    console.log(`Subject: Order confirmation — ${orderId}`);
+    console.log(`Subject: ${subject}`);
     console.log(`Total:   ${formatINR(total)}`);
     console.log("================================================================\n");
     return;
@@ -277,7 +296,7 @@ export async function sendOrderReceiptEmail(payload: OrderReceiptPayload) {
   await transporter.sendMail({
     from: `"Madhur Sweets" <${process.env.ZOHO_EMAIL}>`,
     to,
-    subject: `Order confirmation — ${orderId}`,
+    subject,
     html,
   });
 }
