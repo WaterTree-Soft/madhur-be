@@ -10,6 +10,7 @@ import settingsRouter from "./settings";
 import razorpayRouter from "./razorpay";
 import testimonialsRouter from "./testimonials";
 import jobsRouter from "./jobs";
+import contactRouter from "./contact";
 import adminRouter from "./admin/index";
 
 const router = Router();
@@ -25,6 +26,7 @@ router.use("/settings", settingsRouter);
 router.use("/razorpay", razorpayRouter);
 router.use("/testimonials", testimonialsRouter);
 router.use("/jobs", jobsRouter);
+router.use("/contact", contactRouter);
 router.use("/admin", adminRouter);
 
 export default router;

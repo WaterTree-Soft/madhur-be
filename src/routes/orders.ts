@@ -1,11 +1,13 @@
 import { Router, Request, Response } from "express";
 import mongoose from "mongoose";
 import { Order } from "../models/Order";
+import { User } from "../models/User";
 import { sendSuccess, sendError, paginationMeta } from "../utils/response";
 import { getPagination } from "../utils/pagination";
 import { authenticate, optionalAuth } from "../middleware/auth";
 import { validate } from "../middleware/validate";
 import { createOrderSchema, cancelOrderSchema } from "../schemas/order.schema";
+import { sendOrderReceiptEmail } from "../utils/email";
 
 const router = Router();
 
@@ -14,6 +16,26 @@ router.post("/", optionalAuth, validate(createOrderSchema), async (req: Request,
   try {
     const userId = req.user ? new mongoose.Types.ObjectId(req.user.userId) : null;
     const order = await Order.create({ ...req.body, userId });
+
+    // Fire-and-forget receipt email for paid orders by authenticated users
+    if (order.paid && userId) {
+      User.findById(userId)
+        .then((user) => {
+          if (!user) return;
+          return sendOrderReceiptEmail({
+            to: user.email,
+            firstName: user.firstName,
+            orderId: String(order._id),
+            items: order.items,
+            total: order.total,
+            address: order.address,
+            razorpayPaymentId: order.razorpayPaymentId,
+            createdAt: order.get("createdAt"),
+          });
+        })
+        .catch((err) => console.error("ORDER RECEIPT EMAIL FAILED:", err));
+    }
+
     return sendSuccess(res, order, undefined, 201);
   } catch {
     return sendError(res, "Failed to create order", 500);
