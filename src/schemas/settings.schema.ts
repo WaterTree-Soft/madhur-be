@@ -19,6 +19,7 @@ export const updateSettingsSchema = z.object({
   faqs: z.string().optional(),
   shippingPolicy: z.string().optional(),
   returnsPolicy: z.string().optional(),
+  heroImages: z.array(z.string()).optional(),
   businessAddress: z.object({
     name: z.string().optional(),
     phone: z.string().optional(),

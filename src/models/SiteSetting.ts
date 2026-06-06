@@ -36,6 +36,7 @@ export interface ISiteSetting extends Document {
   shippingPolicy?: string;
   returnsPolicy?: string;
   businessAddress?: BusinessAddress;
+  heroImages?: string[];
 }
 
 const siteSettingSchema = new Schema<ISiteSetting>(
@@ -72,6 +73,7 @@ const siteSettingSchema = new Schema<ISiteSetting>(
       hoursWeekdays: { type: String },
       hoursSunday: { type: String },
     },
+    heroImages: { type: [String], default: [] },
   },
   { timestamps: true }
 );
