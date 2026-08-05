@@ -7,7 +7,20 @@ const router = Router();
 
 // POST /api/admin/upload  — single file
 // Optional body field `folder` sets the R2 key prefix (e.g. "categories/sweets")
-router.post("/", upload.single("file"), async (req: Request, res: Response) => {
+router.post("/", (req: Request, res: Response, next) => {
+  upload.single("file")(req, res, (err) => {
+    if (err) {
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return sendError(res, "Please upload an image of less than 100kb", 400);
+      }
+      if (err.message) {
+        return sendError(res, err.message, 400);
+      }
+      return sendError(res, "File upload failed", 400);
+    }
+    next();
+  });
+}, async (req: Request, res: Response) => {
   if (!req.file) return sendError(res, "No file uploaded", 400);
   const folder = (req.body?.folder as string | undefined)?.trim() || "uploads";
   try {
@@ -21,7 +34,20 @@ router.post("/", upload.single("file"), async (req: Request, res: Response) => {
 
 // POST /api/admin/upload/multiple  — up to 10 files
 // Optional body field `folder` sets the R2 key prefix (e.g. "products/sweets/kaju-katli")
-router.post("/multiple", upload.array("files", 10), async (req: Request, res: Response) => {
+router.post("/multiple", (req: Request, res: Response, next) => {
+  upload.array("files", 10)(req, res, (err) => {
+    if (err) {
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return sendError(res, "Please upload an image of less than 100kb", 400);
+      }
+      if (err.message) {
+        return sendError(res, err.message, 400);
+      }
+      return sendError(res, "File upload failed", 400);
+    }
+    next();
+  });
+}, async (req: Request, res: Response) => {
   const files = req.files as Express.Multer.File[];
   if (!files?.length) return sendError(res, "No files uploaded", 400);
   const folder = (req.body?.folder as string | undefined)?.trim() || "uploads";

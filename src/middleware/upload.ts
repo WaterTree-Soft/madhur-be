@@ -17,7 +17,7 @@ function fileFilter(
   }
 }
 
-const maxSizeMb = parseInt(process.env.MAX_FILE_SIZE_MB ?? "10");
+const maxSizeMb = parseFloat(process.env.MAX_FILE_SIZE_MB ?? "0.1");
 
 export const upload = multer({
   storage: multer.memoryStorage(),

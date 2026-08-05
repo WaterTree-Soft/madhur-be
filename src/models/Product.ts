@@ -1,6 +1,12 @@
 import mongoose, { Document, Schema, Types } from "mongoose";
 import { toJsonPlugin } from "../utils/toJsonPlugin";
 
+export interface IVariant {
+  weight: string;
+  price: number;
+  discountPrice?: number;
+}
+
 export interface IProduct extends Document {
   name: string;
   slug: string;
@@ -12,11 +18,21 @@ export interface IProduct extends Document {
   category: Types.ObjectId;
   inStock: boolean;
   weight: string;
+  variants?: IVariant[];
   ingredients?: string;
   shelfLife?: string;
   rating: number;
   reviewCount: number;
 }
+
+const variantSchema = new Schema<IVariant>(
+  {
+    weight: { type: String, required: true },
+    price: { type: Number, required: true, min: 0 },
+    discountPrice: { type: Number, min: 0 },
+  },
+  { _id: false }
+);
 
 const productSchema = new Schema<IProduct>(
   {
@@ -30,6 +46,7 @@ const productSchema = new Schema<IProduct>(
     category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
     inStock: { type: Boolean, default: true },
     weight: { type: String, required: true },
+    variants: { type: [variantSchema], default: [] },
     ingredients: { type: String },
     shelfLife: { type: String },
     rating: { type: Number, default: 0, min: 0, max: 5 },

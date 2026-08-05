@@ -35,7 +35,29 @@ router.get("/", async (req: Request, res: Response) => {
 router.post("/", validate(createProductSchema), async (req: Request, res: Response) => {
   try {
     const slug = req.body.slug ?? slugify(req.body.name, { lower: true, strict: true });
-    const product = await Product.create({ ...req.body, slug });
+
+    // Always ensure default weight is the first variant
+    let variants = req.body.variants || [];
+    const defaultVariant = {
+      weight: req.body.weight,
+      price: req.body.price,
+      discountPrice: req.body.discountPrice,
+    };
+
+    // Check if default weight already exists in variants
+    const defaultExists = variants.some((v: any) => v.weight === req.body.weight);
+
+    if (!defaultExists) {
+      // Add default as first variant
+      variants = [defaultVariant, ...variants];
+    } else {
+      // Move default to first position
+      variants = variants.filter((v: any) => v.weight !== req.body.weight);
+      variants = [defaultVariant, ...variants];
+    }
+
+    const productData = { ...req.body, slug, variants };
+    const product = await Product.create(productData);
     const populated = await product.populate("category", "name slug");
     return sendSuccess(res, populated, undefined, 201);
   } catch (err: unknown) {
@@ -73,6 +95,26 @@ router.put("/:id", validate(updateProductSchema), async (req: Request, res: Resp
         deleteUrls(removed).catch((e) => console.warn("[R2 cleanup]", e));
       }
     }
+
+    // Always ensure default weight is the first variant
+    const weight = req.body.weight ?? old.weight;
+    const price = req.body.price ?? old.price;
+    const discountPrice = req.body.discountPrice ?? old.discountPrice;
+    let variants = req.body.variants ?? old.variants ?? [];
+
+    const defaultVariant = { weight, price, discountPrice };
+    const defaultExists = variants.some((v: any) => v.weight === weight);
+
+    if (!defaultExists) {
+      // Add default as first variant
+      variants = [defaultVariant, ...variants];
+    } else {
+      // Move default to first position
+      variants = variants.filter((v: any) => v.weight !== weight);
+      variants = [defaultVariant, ...variants];
+    }
+
+    req.body.variants = variants;
 
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
       new: true, runValidators: true,

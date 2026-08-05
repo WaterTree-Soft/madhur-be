@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+const variantSchema = z.object({
+  weight: z.string().min(1),
+  price: z.number().positive(),
+  discountPrice: z.number().positive().optional(),
+});
+
 export const createProductSchema = z.object({
   name: z.string().min(2).max(255),
   slug: z.string().min(2).max(255).optional(),
@@ -11,6 +17,7 @@ export const createProductSchema = z.object({
   category: z.string().min(1),
   inStock: z.boolean().default(true),
   weight: z.string().min(1),
+  variants: z.array(variantSchema).optional(),
   ingredients: z.string().optional(),
   shelfLife: z.string().optional(),
 });
